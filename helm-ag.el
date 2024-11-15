@@ -393,6 +393,7 @@ this is a temporary preview action."
     (fundamental-mode)
     (erase-buffer)
     (insert-file-contents filename)
+    (set-buffer-modified-p nil)
     (let ((buffer-file-name filename))
       (set-auto-mode)
       (font-lock-fontify-region (point-min) (point-max)))))
