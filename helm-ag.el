@@ -789,6 +789,7 @@ edits directly to lines matched by the search:
   (goto-char (point-min))
   (setq next-error-function 'compilation-next-error-function)
   (setq-local compilation-locs (make-hash-table :test 'equal :weakness 'value))
+  (setq-local query-replace-skip-read-only t)
   (use-local-map helm-ag-edit-map))
 
 (defun helm-ag-edit ()
