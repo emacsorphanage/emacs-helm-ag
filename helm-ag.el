@@ -313,7 +313,7 @@ cdr is a list of all arguments."
       (goto-char (point-min))
       (forward-line 1)
       (while (re-search-forward "^\\([^:]+\\)" nil t)
-        (replace-match (abbreviate-file-name (match-string-no-properties 1)))))))
+        (replace-match (abbreviate-file-name (match-string-no-properties 1)) t t)))))
 
 (defun helm-ag--command-succeeded-p (exit-status)
   "Determine if a command succeeded based on EXIT-STATUS"
