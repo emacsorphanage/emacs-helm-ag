@@ -1094,10 +1094,7 @@ Continue searching the parent directory? "))
    (helm-ag--remove-carrige-returns)
    (when helm-ag--buffer-search
      (helm-ag--abbreviate-file-name))
-   (helm-ag--propertize-candidates input)
-   (when helm-ag-show-status-function
-     (funcall helm-ag-show-status-function)
-     (force-mode-line-update))))
+   (helm-ag--propertize-candidates input)))
 
 (defun helm-ag--construct-extension-options ()
   "Construct file extension options for the `ag' command based on `helm-do-ag--extensions'."
@@ -1174,7 +1171,13 @@ Continue searching the parent directory? "))
              (helm-process-deferred-sentinel-hook
               process event (helm-default-directory))
              (when (string= event "finished\n")
-               (helm-ag--do-ag-propertize helm-input)))))))))
+               (helm-ag--do-ag-propertize helm-input))
+             ;; Always update status to inform user if process ends
+             (when (and helm-ag-show-status-function
+                        (not (process-live-p process)))
+               (with-helm-window
+                 (funcall helm-ag-show-status-function)
+                 (force-mode-line-update))))))))))
 
 (defconst helm-do-ag--help-message
   "\n* Helm Do Ag\n
