@@ -109,55 +109,96 @@
           (expected '("ag" "--nocolor" "--nogroup" "--ignore=*.md" "--ignore=*.el" "foo")))
       (should (equal got expected)))))
 
-(ert-deftest construct-do-ag-command ()
-  "helm-ag--construct-do-ag-command"
-  (let ((helm-ag-base-command "ag --nocolor --nogroup"))
-    (helm-ag--do-ag-set-command)
-    (let ((got (helm-ag--construct-do-ag-command "somepattern"))
-          (expected '("ag" "--nocolor" "--nogroup" "somepattern")))
-      (should (equal got expected)))
+(ert-deftest construct-command-in-do-ag ()
+  "helm-ag--construct-command used in helm-do-ag"
+  (let* ((helm-ag-base-command "ag --nocolor --nogroup")
+         (helm-ag--last-query "somepattern")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "somepattern")))
+    (should (equal got expected)))
 
-    (let* ((helm-ag--command-features '())  ;; unknown pattern
-           (got (helm-ag--construct-do-ag-command "pat1 pat2"))
-           (expected '("ag" "--nocolor" "--nogroup" "pat1 pat2")))
-      (should (equal got expected)))
+  (let* ((helm-ag--command-features '())  ;; unknown pattern
+         (helm-ag--last-query "pat1 pat2")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "pat1 pat2")))
+    (should (equal got expected)))
 
-    (let* ((helm-ag--command-features '(fixed))
-           (got (helm-ag--construct-do-ag-command "pat1 pat2"))
-           (expected '("ag" "--nocolor" "--nogroup" "pat1 pat2")))
-      (should (equal got expected)))
+  (let* ((helm-ag--command-features '(fixed))
+         (helm-ag--last-query "pat1 pat2")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "pat1 pat2")))
+    (should (equal got expected)))
 
-    (let* ((helm-ag--command-features '(re2))
-           (got (helm-ag--construct-do-ag-command "pat1 pat2"))
-           (expected '("ag" "--nocolor" "--nogroup" "pat1.*pat2")))
-      (should (equal got expected)))
+  (let* ((helm-ag--command-features '(re2))
+         (helm-ag--last-query "pat1 pat2")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "pat1.*pat2")))
+    (should (equal got expected)))
 
-    (let* ((helm-ag--command-features '(pcre))
-           (got (helm-ag--construct-do-ag-command "pat1 pat2"))
-           (expected '("ag" "--nocolor" "--nogroup" "(?=.*pat1.*)(?=.*pat2.*)")))
-      (should (equal got expected)))
+  (let* ((helm-ag--command-features '(pcre))
+         (helm-ag--last-query "pat1 pat2")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "(?=.*pat1.*)(?=.*pat2.*)")))
+    (should (equal got expected)))
 
-    (let ((helm-ag-command-option "--ignore-case --all-text"))
-      (helm-ag--do-ag-set-command)
-      (let* ((got (helm-ag--construct-do-ag-command "somepattern"))
-             (expected '("ag" "--nocolor" "--nogroup" "--ignore-case" "--all-text"
-                         "somepattern")))
-        (should (equal got expected))))
+  (let* ((helm-ag-command-option "--ignore-case --all-text")
+         (helm-ag--last-query "somepattern")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "--ignore-case" "--all-text"
+                     "somepattern")))
+    (should (equal got expected)))
 
-    (let ((helm-ag-ignore-patterns '("apple" "orange")))
-      (helm-ag--do-ag-set-command)
-      (let* ((got (helm-ag--construct-do-ag-command "somepattern"))
-             (expected '("ag" "--nocolor" "--nogroup" "--ignore=apple" "--ignore=orange"
-                         "somepattern")))
-        (should (equal got expected))))))
+  (let* ((helm-ag-ignore-patterns '("apple" "orange"))
+         (helm-ag--last-query "somepattern")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "--ignore=apple" "--ignore=orange"
+                     "somepattern")))
+    (should (equal got expected))))
 
-(ert-deftest construct-do-ag-command-with-extra-option ()
-  "helm-ag--construct-do-ag-command with extra options"
-  (let ((helm-ag-base-command "ag --nocolor --nogroup")
-        (helm-ag--extra-options "-G\\.md$"))
-    (helm-ag--do-ag-set-command)
-    (let ((got (helm-ag--construct-do-ag-command "somepattern"))
-          (expected '("ag" "--nocolor" "--nogroup" "-G\\.md$" "somepattern")))
+(ert-deftest construct-command-with-extra-option-in-do-ag ()
+  "helm-ag--construct-command with extra options used in helm-do-ag"
+  (let* ((helm-ag-base-command "ag --nocolor --nogroup")
+         (helm-ag--extra-options "-G\\.md$")
+         (helm-ag--last-query "somepattern")
+         (got (helm-ag--construct-command))
+         (expected '("ag" "--nocolor" "--nogroup" "-G\\.md$" "somepattern")))
+    (should (equal got expected))))
+
+(ert-deftest construct-command-for-rg ()
+  "helm-ag--construct-command for rg base command"
+  (let* ((helm-ag-base-command "rg --no-heading")
+         (helm-ag--last-query "somepattern")
+         (got (helm-ag--construct-command))
+         (expected '("rg" "--no-heading" "somepattern")))
+    (should (equal got expected))))
+
+(ert-deftest construct-command-with-options-for-rg ()
+  "helm-ag--construct--command with options for rg base command"
+  (let ((helm-ag-base-command "rg --no-heading")
+        (helm-ag-command-option "--max-depth=5 -P")
+        (helm-ag--last-query "pattern"))
+    (let ((got (helm-ag--construct-command nil))
+          (expected '("rg" "--no-heading" "--max-depth=5" "-P"
+                      "pattern")))
+      (should (equal got expected)))))
+
+(ert-deftest construct-command-with-ignore-options-for-rg ()
+  "helm-ag--construct--command with options for rg base command"
+  (let ((helm-ag-base-command "rg --no-heading")
+        (helm-ag-command-option "--max-depth=5 -P")
+        (helm-ag--last-query "pattern"))
+    (let ((got (helm-ag--construct-command nil))
+          (expected '("rg" "--no-heading" "--max-depth=5" "-P"
+                      "pattern")))
+      (should (equal got expected)))))
+
+(ert-deftest construct-command-with-ignore-options-for-rg ()
+  "helm-ag--construct--command with ignore options for rg base command"
+  (let ((helm-ag-base-command "rg --no-heading")
+        (helm-ag-ignore-patterns '("*.md" "*.el"))
+        (helm-ag--last-query "foo"))
+    (let ((got (helm-ag--construct-command nil))
+          (expected '("rg" "--no-heading" "--glob=!*.md" "--glob=!*.el" "foo")))
       (should (equal got expected)))))
 
 (ert-deftest validate-regexp-with-valid-regexp ()
